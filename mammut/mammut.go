@@ -67,3 +67,22 @@ func GetAccountId(auth, host, accountQuery string) (string, error) {
 	}
 	return value.Accounts[0].Id, nil
 }
+
+func GetFollowing(auth, host, account string) ([]string, error) {
+	id, err := GetAccountId(auth, host, account)
+	if err != nil {
+		return nil, err
+	}
+	var value []struct {
+		Acct string `json:"acct"`
+	}
+	path := fmt.Sprintf("/api/v1/accounts/%s/following", id)
+	err = rest.Get(auth, host, path,
+        map[string]string{"limit": "1000"}, &value)
+	result := make([]string, 0, len(value))
+	for _, v := range value {
+		result = append(result, v.Acct)
+	}
+	return result, nil
+}
+
