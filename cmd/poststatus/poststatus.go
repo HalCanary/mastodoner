@@ -12,12 +12,13 @@ import (
 )
 
 func main() {
-	if err := mainImpl(os.Args[1:], os.Stdin); err != nil {
+	if err := PostStatus(os.Args[1:], os.Stdin); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func mainImpl(args []string, statusReader io.Reader) error {
+// Needs `write:statuses` authorization token.
+func PostStatus(args []string, statusReader io.Reader) error {
 	var flagSet flag.FlagSet
 	spoiler := flagSet.String("spoiler", "", "spoiler text for content warning, if not empty")
 	visibility := flagSet.String("visibility", "", "public or unlisted or private")
@@ -49,8 +50,7 @@ func mainImpl(args []string, statusReader io.Reader) error {
 				size, mastodonInfo.MaximumStatusLength)
 		}
 	}
-	auth := "Bearer " + mastodonInfo.AccessToken
-	id, url, err := mammut.PostStatus(auth, mastodonInfo.Host, post)
+	id, url, err := mammut.PostStatus(mastodonInfo.AccessToken, mastodonInfo.Host, post)
 	if err != nil {
 		return err
 	}

@@ -17,10 +17,10 @@ func main() {
 	}
 }
 
+// Needs `read:search` and `read:accounts` authorization token.
 func listfollows(args []string, statusReader io.Reader) error {
 	var flagSet flag.FlagSet
 	accountQuery := flagSet.String("q", "", "account query")
-
 	flagSet.Parse(args)
 
 	mastodonInfo, err := mammut.GetMastodonInfo()
@@ -28,8 +28,7 @@ func listfollows(args []string, statusReader io.Reader) error {
 		return err
 	}
 
-	auth := "Bearer " + mastodonInfo.AccessToken
-	follows, err := mammut.GetFollowing(auth, mastodonInfo.Host, *accountQuery)
+	follows, err := mammut.GetFollowing(mastodonInfo.AccessToken, mastodonInfo.Host, *accountQuery)
 	if err != nil {
 		return err
 	}

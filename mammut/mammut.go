@@ -10,6 +10,8 @@ import (
 	"github.com/HalCanary/mastodoner/rest"
 )
 
+// See https://docs.joinmastodon.org/api/
+
 type MastodonInfo struct {
 	AccessToken         string
 	Language            string // ISO 639 language code
@@ -41,23 +43,29 @@ type Status struct {
 	Sensitive   bool   `json:"sensitive,omitempty"`
 }
 
-func PostStatus(auth, host string, status Status) (id, url string, err error) {
+func auth(token string) string {
+	return "Bearer " + token
+}
+
+// Needs `write:statuses` authorization token.
+func PostStatus(token, host string, status Status) (id, url string, err error) {
 	var result struct {
 		Id  string `json:"id"`
 		Url string `json:"url"`
 	}
-	err = rest.Post(auth, host, "/api/v1/statuses", &status, &result)
+	err = rest.Post(auth(token), host, "/api/v1/statuses", &status, &result)
 	return result.Id, result.Url, err
 }
 
-func GetAccountId(auth, host, accountQuery string) (string, error) {
+// Needs `read:search` authorization token.
+func GetAccountId(token, host, accountQuery string) (string, error) {
 	var value struct {
 		Accounts []struct {
 			Id   string `json:"id"`
 			Acct string `json:"acct"`
 		} `json:"accounts"`
 	}
-	err := rest.Get(auth, host, "/api/v2/search",
+	err := rest.Get(auth(token), host, "/api/v2/search",
 		map[string]string{"type": "accounts", "q": accountQuery}, &value)
 	if err != nil {
 		return "", err
@@ -68,8 +76,9 @@ func GetAccountId(auth, host, accountQuery string) (string, error) {
 	return value.Accounts[0].Id, nil
 }
 
-func GetFollowing(auth, host, account string) ([]string, error) {
-	id, err := GetAccountId(auth, host, account)
+// Needs `read:search` and `read:accounts` authorization token.
+func GetFollowing(token, host, account string) ([]string, error) {
+	id, err := GetAccountId(token, host, account)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +86,7 @@ func GetFollowing(auth, host, account string) ([]string, error) {
 		Acct string `json:"acct"`
 	}
 	path := fmt.Sprintf("/api/v1/accounts/%s/following", id)
-	err = rest.Get(auth, host, path,
+	err = rest.Get(auth(token), host, path,
 		map[string]string{"limit": "1000"}, &value)
 	result := make([]string, 0, len(value))
 	for _, v := range value {
@@ -86,11 +95,12 @@ func GetFollowing(auth, host, account string) ([]string, error) {
 	return result, nil
 }
 
-func Follow(auth, host, account string) error {
-	id, err := GetAccountId(auth, host, account)
+// Needs `read:search` and `write:follows` authorization token.
+func Follow(token, host, account string) error {
+	id, err := GetAccountId(token, host, account)
 	if err != nil {
 		return err
 	}
 	path := fmt.Sprintf("/api/v1/accounts/%s/follow", id)
-	return rest.Post(auth, host, path, nil, nil)
+	return rest.Post(auth(token), host, path, nil, nil)
 }

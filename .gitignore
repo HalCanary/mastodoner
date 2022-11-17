@@ -1,5 +1,5 @@
-/poststatus
 *.swp
 *~
-/listfollows
 /follow
+/listfollows
+/poststatus

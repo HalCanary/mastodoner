@@ -14,14 +14,14 @@ func main() {
 	}
 }
 
+// Needs `read:search` and `write:follows` authorization token.
 func follow(args []string) error {
 	mastodonInfo, err := mammut.GetMastodonInfo()
 	if err != nil {
 		return err
 	}
-	auth := "Bearer " + mastodonInfo.AccessToken
 	for _, arg := range args {
-		if err = mammut.Follow(auth, mastodonInfo.Host, arg); err != nil {
+		if err = mammut.Follow(mastodonInfo.AccessToken, mastodonInfo.Host, arg); err != nil {
 			return err
 		}
 	}
