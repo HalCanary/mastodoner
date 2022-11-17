@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"sort"
 
 	"github.com/HalCanary/mastodoner/mammut"
 )
@@ -21,6 +22,7 @@ func main() {
 func listfollows(args []string, statusReader io.Reader) error {
 	var flagSet flag.FlagSet
 	accountQuery := flagSet.String("q", "", "account query")
+	tags := flagSet.Bool("tags", false, "tags")
 	flagSet.Parse(args)
 
 	mastodonInfo, err := mammut.GetMastodonInfo()
@@ -28,10 +30,18 @@ func listfollows(args []string, statusReader io.Reader) error {
 		return err
 	}
 
-	follows, err := mammut.GetFollowing(mastodonInfo.AccessToken, mastodonInfo.Host, *accountQuery)
+	var follows []string
+
+	if *tags {
+		follows, err = mammut.GetFollowingTags(mastodonInfo.AccessToken, mastodonInfo.Host)
+	} else {
+		follows, err = mammut.GetFollowing(
+			mastodonInfo.AccessToken, mastodonInfo.Host, *accountQuery)
+	}
 	if err != nil {
 		return err
 	}
+	sort.Strings(follows)
 	for _, f := range follows {
 		fmt.Println(f)
 	}
