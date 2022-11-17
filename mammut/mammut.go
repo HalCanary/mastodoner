@@ -78,7 +78,7 @@ func GetFollowing(auth, host, account string) ([]string, error) {
 	}
 	path := fmt.Sprintf("/api/v1/accounts/%s/following", id)
 	err = rest.Get(auth, host, path,
-        map[string]string{"limit": "1000"}, &value)
+		map[string]string{"limit": "1000"}, &value)
 	result := make([]string, 0, len(value))
 	for _, v := range value {
 		result = append(result, v.Acct)
@@ -86,3 +86,11 @@ func GetFollowing(auth, host, account string) ([]string, error) {
 	return result, nil
 }
 
+func Follow(auth, host, account string) error {
+	id, err := GetAccountId(auth, host, account)
+	if err != nil {
+		return err
+	}
+	path := fmt.Sprintf("/api/v1/accounts/%s/follow", id)
+	return rest.Post(auth, host, path, nil, nil)
+}
