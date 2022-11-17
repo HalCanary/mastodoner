@@ -95,6 +95,21 @@ func GetFollowing(token, host, account string) ([]string, error) {
 	return result, nil
 }
 
+func GetFollowingTags(token, host string) ([]string, error) {
+	var value []struct {
+		Name string `json:"name"`
+		Url  string `json:"url"`
+	}
+	path := fmt.Sprintf("/api/v1/followed_tags")
+	err := rest.Get(auth(token), host, path,
+		map[string]string{"limit": "1000"}, &value)
+	result := make([]string, 0, len(value))
+	for _, v := range value {
+		result = append(result, v.Url)
+	}
+	return result, err
+}
+
 // Needs `read:search` and `write:follows` authorization token.
 func Follow(token, host, account string) error {
 	id, err := GetAccountId(token, host, account)
