@@ -1,12 +1,23 @@
-all: follow listfollows poststatus
+## Go Makefile
+## Copyright 2022 Hal Canary.  See LICENSE.md
 
-.PHONY: all, clean, gofmt
+CMDS = $(notdir $(wildcard cmd/*))
 
-follow listfollows poststatus: %: $(shell find . -name '*.go')
-	go build ./cmd/$*
+all: $(CMDS)
 
 clean:
-	git clean -fx
+	rm -f $(CMDS)
 
 gofmt:
 	gofmt -w */*.go cmd/*/*.go
+
+gotest:
+	go test ./...
+
+define GoCommandTemplate
+$1: $$(wildcard cmd/$1/*.go wildcard */*.go)
+	go build ./cmd/$1
+endef
+$(foreach d,$(CMDS),$(eval $(call GoCommandTemplate,$d)))
+
+.PHONY: all, clean, gofmt, gotest
