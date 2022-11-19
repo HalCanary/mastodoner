@@ -18,12 +18,14 @@ func main() {
 }
 
 // Needs `write:statuses` authorization token.
-func PostStatus(args []string, statusReader io.Reader) error {
+func PostStatus(args []string, statusReader io.ReadCloser) error {
 	var flagSet flag.FlagSet
 	spoiler := flagSet.String("spoiler", "", "spoiler text for content warning, if not empty")
 	visibility := flagSet.String("visibility", "", "public or unlisted or private")
 	inReplyToId := flagSet.String("replyTo", "", "in reply to id")
-	flagSet.Parse(args)
+	if err := flagSet.Parse(args); err != nil {
+		return nil
+	}
 
 	mastodonInfo, err := mammut.GetMastodonInfo()
 	if err != nil {
@@ -31,6 +33,7 @@ func PostStatus(args []string, statusReader io.Reader) error {
 	}
 
 	statusData, err := io.ReadAll(statusReader)
+	statusReader.Close()
 	if err != nil {
 		return err
 	}
