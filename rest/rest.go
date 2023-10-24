@@ -57,8 +57,16 @@ func doHttp(req *http.Request, result any) error {
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("Response: %q %q", resp.Status, string(body))
 	}
+	//prnt(body)
 	if result != nil {
 		return json.Unmarshal(body, result)
 	}
 	return nil
+}
+
+func prnt(src []byte) {
+	var x interface{}
+	json.Unmarshal(src, &x)
+	y, _ := json.MarshalIndent(x, "", "    ")
+	fmt.Println(string(y))
 }

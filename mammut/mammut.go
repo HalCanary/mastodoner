@@ -58,7 +58,7 @@ func PostStatus(token, host string, status Status) (id, url string, err error) {
 }
 
 // Needs `read:search` authorization token.
-func GetAccountId(token, host, accountQuery string) (string, error) {
+func GetAccountId(token, host, accountQuery string) ([]string, error) {
 	var value struct {
 		Accounts []struct {
 			Id   string `json:"id"`
@@ -68,29 +68,38 @@ func GetAccountId(token, host, accountQuery string) (string, error) {
 	err := rest.Get(auth(token), host, "/api/v2/search",
 		map[string]string{"type": "accounts", "q": accountQuery}, &value)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	if len(value.Accounts) != 1 {
-		return "", fmt.Errorf("%d results for AccountId query", len(value.Accounts))
+	if len(value.Accounts) < 1 {
+		return nil, fmt.Errorf("%d results for AccountId query", len(value.Accounts))
 	}
-	return value.Accounts[0].Id, nil
+	var result []string
+	for _, account := range value.Accounts {
+		result = append(result, account.Id)
+	}
+	return result, nil
 }
 
 // Needs `read:search` and `read:accounts` authorization token.
 func GetFollowing(token, host, account string) ([]string, error) {
-	id, err := GetAccountId(token, host, account)
+	ids, err := GetAccountId(token, host, account)
 	if err != nil {
 		return nil, err
 	}
-	var value []struct {
-		Acct string `json:"acct"`
-	}
-	path := fmt.Sprintf("/api/v1/accounts/%s/following", id)
-	err = rest.Get(auth(token), host, path,
-		map[string]string{"limit": "1000"}, &value)
-	result := make([]string, 0, len(value))
-	for _, v := range value {
-		result = append(result, v.Acct)
+	var result []string
+	for _, id := range ids {
+		var value []struct {
+			Acct string `json:"acct"`
+		}
+		path := fmt.Sprintf("/api/v1/accounts/%s/following", id)
+		err = rest.Get(auth(token), host, path,
+			map[string]string{"limit": "1000"}, &value)
+		if err != nil {
+			return result, err
+		}
+		for _, v := range value {
+			result = append(result, v.Acct)
+		}
 	}
 	return result, nil
 }
