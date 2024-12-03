@@ -1,27 +1,35 @@
 ## Go Makefile
 ## Copyright 2022 Hal Canary.  See LICENSE.md
 
-CMDS = $(notdir $(wildcard cmd/*))
+go_commands = $(notdir $(wildcard cmd/*))
+go_binaries = $(addprefix build/,${go_commands})
 
-all: $(CMDS)
+all: build test
+
+build: ${go_binaries}
+
+build/dependencies.stamp: go.mod
+	go get ./...
+	@mkdir -p build
+	@touch $@
 
 clean:
-	rm -f $(CMDS)
+	rm -rf build
 
-gofmt:
+fmt:
 	gofmt -w */*.go cmd/*/*.go
 
-gotest:
+test: build/dependencies.stamp
 	go test ./...
 
-install: $(CMDS)
+install: ${go_binaries}
 	mkdir -p ~/bin
-	mv $(CMDS) ~/bin
+	mv $^ ~/bin
 
 define GoCommandTemplate
-$1: $$(wildcard cmd/$1/*.go wildcard */*.go)
-	go build ./cmd/$1
+build/$1: $$(wildcard cmd/$1/*.go wildcard */*.go) build/dependencies.stamp
+	go build -o build ./cmd/$1
 endef
-$(foreach d,$(CMDS),$(eval $(call GoCommandTemplate,$d)))
+$(foreach d,$(go_commands),$(eval $(call GoCommandTemplate,$d)))
 
-.PHONY: all, clean, gofmt, gotest, install
+.PHONY: all, build, clean, fmt, test, install
